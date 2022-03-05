@@ -9,21 +9,15 @@ import java.util.Map;
 import java.util.Scanner;
 
 public class DataBank {
-  private List<String> lexicon;
-  private List<Map<Character, Integer>> positionedCountMapping;
-  private List<Map<Character, Double>> positionedFrequencyMapping;
+  private List<String> lexicon = new ArrayList<>();
+  private List<Map<Character, Integer>> positionedCountMapping = new ArrayList<>();
+  private List<Map<Character, Double>> positionedFrequencyMapping = new ArrayList<>();
   private Map<Character, Integer> countMapping;
   private Map<Character, Double> frequencyMapping;
-  private Map<String, Double> probabilityScore;
+  private Map<String, Double> probabilityScore = new HashMap<>();
   private int lexiconSize;
-
-  public List<Map<Character, Integer>> getPositionedCountMapping() {
-    return List.copyOf(positionedCountMapping);
-  }
-
-  public Map<Character, Integer> getCountMapping() {
-    return Map.copyOf(countMapping);
-  }
+  private Map<String, Double> lexicalItemProbabilityMapping = new HashMap<>();
+  private Map<String, Double> positionedLexicalItemProbabilityMapping = new HashMap<>();
 
   public List<Map<Character, Double>> getPositionedFrequencyMapping() {
     return List.copyOf(positionedFrequencyMapping);
@@ -31,6 +25,44 @@ public class DataBank {
 
   public Map<Character, Double> getFrequencyMapping() {
     return Map.copyOf(frequencyMapping);
+  }
+
+  public Map<String, Double> getLexicalItemProbabilityMapping() {
+    return Map.copyOf(lexicalItemProbabilityMapping);
+  }
+
+  public Map<String, Double> getPositionedLexicalItemProbabilityMapping() {
+    return Map.copyOf(positionedLexicalItemProbabilityMapping);
+  }
+
+  private void computeFrequencyMapping() {
+    for (char i = 'a'; i <= 'z'; i++) {
+      frequencyMapping.put(i, ((double) countMapping.get(i)) / ((double) lexiconSize));
+      for (int j = 0; j < Constants.WORD_LENGTH; j++) {
+        positionedFrequencyMapping.get(j).put(i,
+                ((double) positionedCountMapping.get(j).get(i)) / ((double) lexiconSize));
+      }
+    }
+  }
+
+  private void computeLexicalProbabilityMapping() {
+    for (String lexicalItem : lexicon) {
+      double probability = 1.0;
+      for (int i = 0; i < Constants.WORD_LENGTH; i++) {
+        probability *= frequencyMapping.get(lexicalItem.charAt(i));
+      }
+      lexicalItemProbabilityMapping.put(lexicalItem, probability);
+    }
+  }
+
+  private void computePositionedLexicalProbabilityMapping() {
+    for (String lexicalItem : lexicon) {
+      double probability = 1.0;
+      for (int i = 0; i < Constants.WORD_LENGTH; i++) {
+        probability *= positionedFrequencyMapping.get(i).get(lexicalItem.charAt(i));
+      }
+      positionedLexicalItemProbabilityMapping.put(lexicalItem, probability);
+    }
   }
 
   public DataBank(String lexiconPath) {
@@ -41,9 +73,6 @@ public class DataBank {
       continuousTemplateMapping.put(i, 0.0);
     }
 
-    lexicon = new ArrayList<>();
-    positionedCountMapping = new ArrayList<>();
-    positionedFrequencyMapping = new ArrayList<>();
     for (int i = 0; i < Constants.WORD_LENGTH; i++) {
       // Turns out that Map.copyOf(discreteTemplateMapping) will be immutable
       positionedCountMapping.add((Map<Character, Integer>) discreteTemplateMapping.clone());
@@ -64,20 +93,15 @@ public class DataBank {
           positionedCountMapping.get(i).put(currentChar, positionedCountMapping.get(i).get(currentChar) + 1);
           countMapping.put(currentChar, countMapping.get(currentChar) + 1);
         }
-        lexiconSize = lexicon.size();
-
-        for (char i = 'a'; i <= 'z'; i++) {
-          frequencyMapping.put(i, ((double) countMapping.get(i)) / ((double) lexiconSize));
-          for (int j = 0; j < Constants.WORD_LENGTH; j++) {
-            positionedFrequencyMapping.get(j).put(i,
-                    ((double) positionedCountMapping.get(j).get(i)) / ((double) lexiconSize));
-          }
-        }
-
       }
     } catch (FileNotFoundException e) {
       System.err.println("File not found.");
       e.printStackTrace();
     }
+
+    lexiconSize = lexicon.size();
+    computeFrequencyMapping();
+    computeLexicalProbabilityMapping();
+    computePositionedLexicalProbabilityMapping();
   }
 }
