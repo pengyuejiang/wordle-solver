@@ -1,25 +1,33 @@
 package com.pengyue.app;
 
-import java.util.List;
-import java.util.Map;
+import com.pengyue.app.solver.Solver;
+import com.pengyue.app.solver.StandardSolver;
+
+import java.util.Scanner;
 
 public class App {
   public static void main(String[] args) {
-    DataBank db = new DataBank("en-lexicon-reduced.txt");
-//    Map<Character, Double> countMapping = db.getFrequencyMapping();
-    Map<String, Double> positionedLexicalItemProbabilityMapping = db.getPositionedLexicalItemProbabilityMapping();
-    // https://www.baeldung.com/java-hashmap-sort
-    positionedLexicalItemProbabilityMapping.entrySet()
-            .stream()
-            .sorted(Map.Entry.<String, Double>comparingByValue().reversed())
-            .forEach(System.out::println);
+    Solver solver = new StandardSolver("wordle-lexicon.txt");
+    Scanner sc = new Scanner(System.in);
 
-    List<Map<Character, Double>> positionedFrequencyMapping = db.getPositionedFrequencyMapping();
-    for (Map<Character, Double> map : positionedFrequencyMapping) {
-      map.entrySet()
-              .stream()
-              .sorted(Map.Entry.<Character, Double>comparingByValue().reversed())
-              .forEach(System.out::println);
+//    DataBank db = new DataBank(solver.getLexicon());
+//    Map<String, Double> positionedWordProbabilityMap = db.getPositionedWordProbabilityMap();
+//    // https://www.baeldung.com/java-hashmap-sort
+//    positionedWordProbabilityMap.entrySet()
+//            .stream()
+//            .sorted(Map.Entry.<String, Double>comparingByValue().reversed())
+//            .forEach(System.out::println);
+
+    String hint = "";
+    // TODO: Set that there's only a number of limited guesses
+    while (!hint.equals("ggggg")) {
+      System.out.println("The best options are " + solver.getNextSteps().toString());
+      System.out.print("Your guess: ");
+      String guess = sc.nextLine();
+      solver.guess(guess);
+      System.out.print("Next hint: ");
+      hint = sc.nextLine();
+      solver.updateWithHint(hint);
     }
   }
 }
