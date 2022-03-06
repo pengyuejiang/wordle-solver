@@ -73,6 +73,10 @@ public class StandardSolver extends Solver {
 
   @Override
   public void updateWithHint(String hint) {
+    if (guesses.size() >= Constants.ALLOWED_GUESSES) {
+      System.out.println("Sorry, you've used up all your chances :(");
+      System.exit(0);
+    }
     hints.add(hint);
     String latestGuess = guesses.get(guesses.size() - 1);
     // Decompose the hint character by character
